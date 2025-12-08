@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "../../components/Header";
@@ -20,7 +21,9 @@ import {
     DialogActions,
     CircularProgress,
 } from "@mui/material";
-import axios from "axios";
+
+const API_BASE_URL =
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
 export default function BookEditPage() {
     const router = useRouter();
@@ -40,7 +43,7 @@ export default function BookEditPage() {
             open: false,
         }));
 
-    // 🔹 로그인 체크 (alert 대신 Dialog + redirect)
+    // 🔹 로그인 체크
     useEffect(() => {
         const user = localStorage.getItem("loginUser");
         if (!user) {
@@ -61,13 +64,75 @@ export default function BookEditPage() {
     const [coverUrl, setCoverUrl] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
 
-    // 🔹 표지 생성 (위 코드의 API 호출 로직 그대로 사용)
+    // (선택) 수정 모드일 때 기존 책 정보 불러오기
+    useEffect(() => {
+        const fetchBook = async () => {
+            if (!isEditMode) return;
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/v1/books/${bookId}`);
+                if (!res.ok) throw new Error("도서 정보를 불러오지 못했습니다.");
+                const data = await res.json();
+
+                setTitle(data.title || "");
+                setContent(data.content || "");
+                setCoverUrl(data.coverUrl || "");
+            } catch (e) {
+                console.error(e);
+                setDialogState({
+                    open: true,
+                    title: "불러오기 실패",
+                    message: e.message,
+                });
+            }
+        };
+        fetchBook();
+    }, [isEditMode, bookId]);
+
+    // ✅ 책 생성 API
+    const createBook = async () => {
+        const loginUser = 2;
+
+        const res = await axios.post(`${API_BASE_URL}/api/v1/books`, {
+            title: title,
+            description: content,
+            user_id: loginUser,
+        });
+
+        return res.data.book_id;
+    };
+
+
+    // ✅ 책 수정 API
+    const updateBook = async (id) => {
+        const loginUser = 2;
+
+        const res = await axios.put(`${API_BASE_URL}/api/v1/books/put`, {
+            bookId: id,
+            title,
+            description: content,
+            userId: loginUser,
+        });
+
+        return res.data;
+    };
+
+    // 🔹 표지 생성
     const handleGenerateCover = async () => {
         if (!title.trim() || !content.trim() || !apiKey.trim()) {
             setDialogState({
                 open: true,
                 title: "입력 오류",
                 message: "API Key, 책 제목, 내용을 모두 입력해야 합니다.",
+            });
+            return;
+        }
+
+        // 🔥 2000자 제한 체크
+        if (content.length > 2000) {
+            setDialogState({
+                open: true,
+                title: "글자수 초과",
+                message: "책 내용은 최대 2000자까지 가능합니다.",
             });
             return;
         }
@@ -105,7 +170,7 @@ export default function BookEditPage() {
             } else {
                 throw new Error(
                     result.error ||
-                    "표지 생성 중 알 수 없는 오류가 발생했습니다. 서버 콘솔을 확인해주세요."
+                    "표지 생성 중 알 수 없는 오류가 발생했습니다."
                 );
             }
         } catch (error) {
@@ -132,70 +197,49 @@ export default function BookEditPage() {
             });
             return;
         }
-        // axios 책 표지(책 표지 등록, 책 표지 수정)
-        // isEditMode가 참이면 수정하는 것 -> 책 표지 수정 (PUT)
-        // false이면 post로 보내기
 
-        const user = JSON.parse(localStorage.getItem("loginUser"));
-
-        // POST(등록) 또는 PUT(수정)으로 전송할 기본 데이터
-        const bodyData = {
-            user_id: user.userId,
-            title: title,
-            content: content,
-            cover_url: coverUrl,
-        };
-
-        // 수정일 경우 book_id 추가
-        if (isEditMode) {
-            bodyData.book_id = Number(bookId);
+        // 🔥 2000자 제한 체크
+        if (content.length > 2000) {
+            setDialogState({
+                open: true,
+                title: "글자수 초과",
+                message: "책 내용은 최대 2000자까지 가능합니다.",
+            });
+            return;
         }
 
         try {
-            const endpoint = isEditMode
-                ? "http://localhost:8080/api/v1/image/put"   // 수정 PUT
-                : "http://localhost:8080/api/v1/image";       // 등록 POST
+            if (isEditMode) {
+                await updateBook(bookId);
+                setDialogState({
+                    open: true,
+                    title: "수정 완료",
+                    message: `도서(id: ${bookId}) 수정이 완료되었습니다.`,
+                });
+            } else {
+                const bookId = await createBook();
 
-            const method = isEditMode ? "put" : "post";
 
-            // axios 요청
-            const response = await axios({
-                method,
-                url: endpoint,
-                data: bodyData,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-
-            // TODO: 실제 DB 등록/수정 API 호출 자리
-            const msg = isEditMode
-                ? `도서(id: ${bookId}) 수정 요청 전송 (TODO)`
-                : "새 도서 등록 요청 전송 (TODO)";
-
-            setDialogState({
-                open: true,
-                title: isEditMode ? "수정 요청 완료" : "등록 요청 완료",
-                message: msg,
-            });
+                const res = await axios.post(`${API_BASE_URL}/api/v1/image`, {
+                    image_url: coverUrl,
+                    book_id : bookId
+                });
+                setDialogState({
+                    open: true,
+                    title: "등록 완료",
+                    message: "새 도서 등록이 완료되었습니다.",
+                });
+            }
 
             setTimeout(() => router.push("/"), 1000);
-        } catch (err) {
-            console.error("책 저장 오류:", err);
-
+        } catch (e) {
+            console.error(e);
             setDialogState({
                 open: true,
-                title: "처리 실패",
-                message:
-                    err.response?.data?.message ||
-                    err.message ||
-                    "서버와 통신 중 오류가 발생했습니다.",
+                title: "요청 실패",
+                message: e.message || "요청 처리 중 오류가 발생했습니다.",
             });
         }
-    };
-
-    const handleBackToList = () => {
-        router.push("/");
     };
 
     return (
@@ -205,12 +249,7 @@ export default function BookEditPage() {
             <Container maxWidth="lg" sx={{ pt: 6, pb: 8 }}>
                 {/* 제목 영역 */}
                 <Box sx={{ mb: 4 }}>
-                    <Typography
-                        variant="h4"
-                        fontWeight={800}
-                        sx={{ mb: 1 }}
-                        align="left"
-                    >
+                    <Typography variant="h4" fontWeight={800} sx={{ mb: 1 }} align="left">
                         AI 표지 생성
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -248,16 +287,9 @@ export default function BookEditPage() {
                             모델 선택
                         </Typography>
                         <FormControl fullWidth size="small">
-                            <Select
-                                value={model}
-                                onChange={(e) => setModel(e.target.value)}
-                            >
-                                <MenuItem value="dall-e-2">
-                                    DALL·E 2 (기본, 1024×1024)
-                                </MenuItem>
-                                <MenuItem value="dall-e-3">
-                                    DALL·E 3 (고품질, 1024×1792)
-                                </MenuItem>
+                            <Select value={model} onChange={(e) => setModel(e.target.value)}>
+                                <MenuItem value="dall-e-2">DALL·E 2 (기본)</MenuItem>
+                                <MenuItem value="dall-e-3">DALL·E 3 (고품질)</MenuItem>
                             </Select>
                         </FormControl>
                     </Box>
@@ -307,7 +339,7 @@ export default function BookEditPage() {
                         </Card>
                     </Box>
 
-                    {/* 책 내용 입력 카드 */}
+                    {/* 책 내용 입력 */}
                     <Box flex="1 1 0">
                         <Card
                             sx={{
@@ -338,13 +370,33 @@ export default function BookEditPage() {
                                 sx={{ mb: 3 }}
                             />
 
+                            {/* 🔥 2000자 제한 적용된 TextField */}
                             <TextField
                                 fullWidth
                                 multiline
                                 minRows={7}
                                 label="책 내용 (입력)"
                                 value={content}
-                                onChange={(e) => setContent(e.target.value)}
+                                onChange={(e) => {
+                                    const text = e.target.value;
+                                    if (text.length <= 2000) {
+                                        setContent(text);
+                                    } else {
+                                        setDialogState({
+                                            open: true,
+                                            title: "글자수 초과",
+                                            message:
+                                                "책 내용은 최대 2000자까지 입력 가능합니다.",
+                                        });
+                                    }
+                                }}
+                                helperText={`${content.length}/2000`}
+                                FormHelperTextProps={{
+                                    style: {
+                                        textAlign: "right",
+                                        color: content.length > 2000 ? "red" : "gray",
+                                    },
+                                }}
                             />
                         </Card>
                     </Box>
@@ -366,7 +418,7 @@ export default function BookEditPage() {
                 </Box>
 
                 <Box mt={2} textAlign="center">
-                    <Button variant="text" onClick={handleBackToList}>
+                    <Button variant="text" onClick={() => router.push("/")}>
                         도서 목록으로 돌아가기
                     </Button>
                 </Box>

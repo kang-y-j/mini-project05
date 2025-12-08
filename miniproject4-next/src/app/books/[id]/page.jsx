@@ -2,15 +2,31 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Container, Box, Typography, Button, Paper } from "@mui/material";
+import {
+    Container,
+    Box,
+    Typography,
+    Button,
+    Paper,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions,
+} from "@mui/material";
 import { useParams, useRouter } from "next/navigation";
 import Header from "../../components/Header";
+import axios from "axios";
+
+const API_BASE_URL =
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
 export default function BookDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const bookId = params.id;
+    const bookId = params.id; // URL /books/[id]
 
+    // 🔹 책 정보 (임시 더미)
     const [book, setBook] = useState({
         title: "도서 상세 정보",
         author: "저자 (출력)",
@@ -21,22 +37,76 @@ export default function BookDetailPage() {
             "책 내용 (출력): 이 책은 AI 기반 도서 표지 생성 프로젝트의 과정을 담고 있습니다.",
     });
 
+    // 🔹 Dialog 상태 (삭제 성공/실패 메시지용)
+    const [dialogState, setDialogState] = useState({
+        open: false,
+        title: "",
+        message: "",
+    });
+
+    const closeDialog = () => {
+        setDialogState((prev) => ({ ...prev, open: false }));
+    };
+
+    // 🔹 (선택) 실제 상세 조회 API 필요하면 여기에 추가
     useEffect(() => {
         if (bookId) {
             console.log(`도서 ID ${bookId} 상세 정보 로드`);
-            // TODO: 실제 API 호출 후 setBook
+            // TODO: 백엔드 조회 API 붙이면 여기에서 setBook 호출
         }
     }, [bookId]);
+
+    // ✅ 삭제 API 호출 함수
+    const deleteBook = async (id) => {
+        // TODO: 나중에 loginUser를 localStorage나 AuthContext에서 받아오면 됨
+        const loginUser = 2; // 임시: userId 2 사용
+
+        const res = await axios.delete(
+            `${API_BASE_URL}/api/v1/books/delete/${id}`,
+            {
+                // @RequestBody User user 와 매핑됨 → { "userId": 2 }
+                data: { userId: loginUser },
+            }
+        );
+
+        return res.data;
+    };
+
+    // ✅ 삭제 버튼 클릭 핸들러
+    const handleDelete = async () => {
+        if (!confirm("정말 삭제하시겠습니까?")) return;
+
+        try {
+            const result = await deleteBook(bookId);
+
+            setDialogState({
+                open: true,
+                title: "삭제 완료",
+                message: result.message || "도서가 삭제되었습니다.",
+            });
+
+            // 조금 있다가 목록으로 이동
+            setTimeout(() => {
+                router.push("/");
+            }, 1000);
+        } catch (e) {
+            console.error(e);
+            setDialogState({
+                open: true,
+                title: "삭제 실패",
+                message:
+                    e.response?.data?.message ||
+                    "도서 삭제 중 오류가 발생했습니다. 다시 시도해주세요.",
+            });
+        }
+    };
 
     return (
         <Box sx={{ minHeight: "100vh", bgcolor: "#f5f5f7" }}>
             <Header />
 
             {/* 전체 폭을 편집 페이지처럼 넓게 사용 */}
-            <Container
-                maxWidth={false}
-                sx={{ maxWidth: 1400, pt: 6, pb: 8 }}
-            >
+            <Container maxWidth={false} sx={{ maxWidth: 1400, pt: 6, pb: 8 }}>
                 {/* 상단 헤더 영역 */}
                 <Box
                     sx={{
@@ -59,19 +129,17 @@ export default function BookDetailPage() {
                         <Button
                             variant="contained"
                             color="success"
-                            onClick={() =>
-                                router.push(`/books/edit?bookId=${bookId}`)
-                            }
+                            onClick={() => router.push(`/books/edit?bookId=${bookId}`)}
                         >
                             수정
                         </Button>
-                        <Button variant="contained" color="error">
+                        <Button variant="contained" color="error" onClick={handleDelete}>
                             삭제
                         </Button>
                     </Box>
                 </Box>
 
-                {/* 👉 편집 페이지처럼 flex 레이아웃으로 변경 */}
+                {/* 표지 + 내용 레이아웃 */}
                 <Box
                     mt={3}
                     display="flex"
@@ -79,7 +147,7 @@ export default function BookDetailPage() {
                     gap={3}
                     alignItems="stretch"
                 >
-                    {/* 왼쪽: 표지 영역 (편집 페이지와 비슷한 폭) */}
+                    {/* 왼쪽: 표지 영역 */}
                     <Box flex={{ xs: "none", md: "0 0 32%" }}>
                         <Paper
                             elevation={3}
@@ -113,7 +181,7 @@ export default function BookDetailPage() {
                         </Paper>
                     </Box>
 
-                    {/* 오른쪽: 책 내용 카드 (나머지 전체 폭 사용) */}
+                    {/* 오른쪽: 책 내용 카드 */}
                     <Box flex="1 1 0">
                         <Paper
                             elevation={1}
@@ -153,9 +221,7 @@ export default function BookDetailPage() {
                                 >
                                     책 내용
                                 </Typography>
-                                <Typography variant="body1">
-                                    {book.contents}
-                                </Typography>
+                                <Typography variant="body1">{book.contents}</Typography>
                             </Box>
 
                             <Box
@@ -185,6 +251,19 @@ export default function BookDetailPage() {
                     </Button>
                 </Box>
             </Container>
+
+            {/* 공용 Dialog (삭제 성공/실패 안내) */}
+            <Dialog open={dialogState.open} onClose={closeDialog}>
+                <DialogTitle>{dialogState.title}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>{dialogState.message}</DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closeDialog} autoFocus>
+                        확인
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }
