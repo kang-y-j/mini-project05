@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { useRouter } from "next/navigation";
 import {
     Box,
@@ -8,29 +9,66 @@ import {
     Card,
     Container,
     Typography,
+    Pagination,
 } from "@mui/material";
+
 import Header from "./components/Header";
 
 export default function HomePage() {
     const router = useRouter();
+
     const [loginUser, setLoginUser] = useState(null);
+    const [books, setBooks] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const books = []; // TODO: 실제 데이터
+    // 페이지네이션 상태
+    const [page, setPage] = useState(1);
+    const pageSize = 5;
 
+    // 로그인 사용자 정보
     useEffect(() => {
         const user = localStorage.getItem("loginUser");
-        if (user) setLoginUser(user);
+        if (user) {
+            setLoginUser(Number(user));
+        }
     }, []);
+
+    // 책 목록 조회
+    useEffect(() => {
+        const fetchBooks = async () => {
+            try {
+                const response = await axios.get(
+                    `http://localhost:8080/api/v1/books/list`
+                );
+
+                const list = response.data.data;
+                if (Array.isArray(list)) {
+                    setBooks(list);
+                } else {
+                    setBooks([]);
+                }
+            } catch (err) {
+                console.error("❌ 책 목록 조회 실패:", err);
+                setBooks([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchBooks();
+    }, []);
+
+    const startIndex = (page - 1) * pageSize;
+    const currentBooks = books.slice(startIndex, startIndex + pageSize);
+
+    const handlePageChange = (_, value) => setPage(value);
 
     return (
         <Box sx={{ minHeight: "100vh", bgcolor: "#f5f5f7" }}>
             <Header />
 
-            <Container
-                maxWidth="lg"
-                sx={{ pt: 6, pb: 8 }}
-            >
-                {/* 상단 타이틀 영역 */}
+            <Container maxWidth="lg" sx={{ pt: 6, pb: 8 }}>
+                {/* 상단 영역 */}
                 <Box
                     sx={{
                         display: "flex",
@@ -40,17 +78,10 @@ export default function HomePage() {
                     }}
                 >
                     <Box>
-                        <Typography
-                            variant="h4"
-                            fontWeight={800}
-                            sx={{ mb: 1 }}
-                        >
+                        <Typography variant="h4" fontWeight={800} sx={{ mb: 1 }}>
                             도서 목록
                         </Typography>
-                        <Typography
-                            variant="body2"
-                            color="text.secondary"
-                        >
+                        <Typography variant="body2" color="text.secondary">
                             등록한 도서를 관리하고, AI 표지를 생성해보세요.
                         </Typography>
                     </Box>
@@ -58,7 +89,6 @@ export default function HomePage() {
                     {loginUser && (
                         <Button
                             variant="contained"
-                            size="medium"
                             onClick={() => router.push("/books/edit")}
                             sx={{ borderRadius: 999, px: 3, py: 1 }}
                         >
@@ -67,34 +97,25 @@ export default function HomePage() {
                     )}
                 </Box>
 
-                {/* 메인 카드 */}
+                {/* 콘텐츠 */}
                 <Card
                     sx={{
                         borderRadius: 3,
                         minHeight: 360,
                         p: 5,
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
+                        bgcolor: "white",
                         boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
                         border: "1px solid rgba(148,163,184,0.3)",
-                        bgcolor: "white",
                     }}
                 >
-                    {books.length === 0 ? (
+                    {loading ? (
+                        <Typography textAlign="center">불러오는 중...</Typography>
+                    ) : books.length === 0 ? (
                         <Box textAlign="center">
-                            <Typography
-                                variant="h6"
-                                fontWeight={600}
-                                sx={{ mb: 1 }}
-                            >
+                            <Typography variant="h6" fontWeight={600}>
                                 아직 등록된 도서가 없습니다.
                             </Typography>
-                            <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{ mb: 3 }}
-                            >
+                            <Typography color="text.secondary" sx={{ mb: 3 }}>
                                 첫 도서를 등록하고 AI 표지를 생성해보세요.
                             </Typography>
 
@@ -107,7 +128,38 @@ export default function HomePage() {
                             </Button>
                         </Box>
                     ) : (
-                        <Typography>도서 목록 표시 영역 (TODO)</Typography>
+                        <>
+                            {currentBooks.map((book) => (
+                                <Card
+                                    key={book.book_id}
+                                    sx={{
+                                        p: 2,
+                                        mb: 2,
+                                        borderRadius: 2,
+                                        border: "1px solid #e2e8f0",
+                                        cursor: "pointer",
+                                    }}
+                                    onClick={() =>
+                                        router.push(`/books/detail/${book.book_id}`)
+                                    }
+                                >
+                                    <Typography variant="h6" fontWeight={700}>
+                                        {book.title}
+                                    </Typography>
+                                    <Typography color="text.secondary">
+                                        {book.description}
+                                    </Typography>
+                                </Card>
+                            ))}
+
+                            <Box display="flex" justifyContent="center" mt={3}>
+                                <Pagination
+                                    count={Math.ceil(books.length / pageSize)}
+                                    page={page}
+                                    onChange={handlePageChange}
+                                />
+                            </Box>
+                        </>
                     )}
                 </Card>
             </Container>
