@@ -23,4 +23,13 @@ public class Book {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @com.fasterxml.jackson.annotation.JsonSetter("userId")
+    public void setUserId(Long userId) {
+        if (userId != null) {
+            User ref = new User();
+            ref.setUserId(userId);
+            this.user = ref;
+        }
+    }
 }
