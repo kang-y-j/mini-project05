@@ -17,6 +17,7 @@ import {
 import { useParams, useRouter } from "next/navigation";
 import Header from "../../components/Header";
 import axios from "axios";
+import { useAuth } from "../../context/AuthContext";
 
 const API_BASE_URL =
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
@@ -24,18 +25,11 @@ const API_BASE_URL =
 export default function BookDetailPage() {
     const params = useParams();
     const router = useRouter();
+    const { user, logout } = useAuth();
     const bookId = params.id; // URL /books/[id]
 
     // 🔹 책 정보 (임시 더미)
-    const [book, setBook] = useState({
-        title: "도서 상세 정보",
-        author: "저자 (출력)",
-        coverUrl: "https://via.placeholder.com/350x450?text=실제+표지+이미지+URL",
-        createdAt: "2025. 5. 23.",
-        updatedAt: "2025. 5. 23.",
-        contents:
-            "책 내용 (출력): 이 책은 AI 기반 도서 표지 생성 프로젝트의 과정을 담고 있습니다.",
-    });
+    const [book, setBook] = useState({ power: "" });
 
     // 🔹 Dialog 상태 (삭제 성공/실패 메시지용)
     const [dialogState, setDialogState] = useState({
@@ -50,11 +44,36 @@ export default function BookDetailPage() {
 
     // 🔹 (선택) 실제 상세 조회 API 필요하면 여기에 추가
     useEffect(() => {
-        if (bookId) {
-            console.log(`도서 ID ${bookId} 상세 정보 로드`);
-            // TODO: 백엔드 조회 API 붙이면 여기에서 setBook 호출
-        }
-    }, [bookId]);
+        const postBooks = async () => {
+            try {
+                const book_res = await axios.post(`http://localhost:8080/api/v1/books/check`, {
+                    book_id : bookId,
+                    user_id: user,
+                });
+
+                const img_res = await axios.post(`http://localhost:8080/api/v1/image/check`, {
+                    book_id : bookId,
+                });
+
+
+                setBook({
+                    ...book_res.data,
+                    ...img_res.data,
+                    power: book_res.data.power
+                });
+                console.log(book);
+            
+    
+            } catch (err) {
+                console.error("❌ 책 목록 조회 실패:", err);
+                setBooks([]);
+            } finally {
+                setLoading(false);
+            }
+            
+        };
+        postBooks();
+    }, []);
 
     // ✅ 삭제 API 호출 함수
     const deleteBook = async (id) => {
@@ -126,16 +145,25 @@ export default function BookDetailPage() {
                     </Box>
 
                     <Box sx={{ display: "flex", gap: 1 }}>
-                        <Button
-                            variant="contained"
-                            color="success"
-                            onClick={() => router.push(`/books/edit?bookId=${bookId}`)}
-                        >
-                            수정
-                        </Button>
-                        <Button variant="contained" color="error" onClick={handleDelete}>
-                            삭제
-                        </Button>
+                        {book.power === "작성자" && (
+                            <>
+                                <Button
+                                    variant="contained"
+                                    color="success"
+                                    onClick={() => router.push(`/books/edit?bookId=${bookId}`)}
+                                >
+                                    수정
+                                </Button>
+
+                                <Button
+                                    variant="contained"
+                                    color="error"
+                                    onClick={handleDelete}
+                                >
+                                    삭제
+                                </Button>
+                            </>
+                        )}
                     </Box>
                 </Box>
 
@@ -161,7 +189,7 @@ export default function BookDetailPage() {
                                 boxShadow: "0 10px 30px rgba(15,23,42,0.12)",
                             }}
                         >
-                            {book.coverUrl ? (
+                            {book.image_url ? (
                                 <Box
                                     component="img"
                                     src={book.coverUrl}
@@ -197,13 +225,13 @@ export default function BookDetailPage() {
                                 {book.title}
                             </Typography>
 
-                            <Typography
+                            {/* <Typography
                                 variant="subtitle1"
                                 color="text.secondary"
                                 sx={{ mb: 3 }}
                             >
                                 저자: {book.author}
-                            </Typography>
+                            </Typography> */}
 
                             <Box
                                 sx={{
@@ -219,7 +247,7 @@ export default function BookDetailPage() {
                                     variant="subtitle2"
                                     sx={{ mb: 1, fontWeight: 600 }}
                                 >
-                                    책 내용
+                                    {book.description}
                                 </Typography>
                                 <Typography variant="body1">{book.contents}</Typography>
                             </Box>
@@ -232,8 +260,8 @@ export default function BookDetailPage() {
                                     fontSize: 13,
                                 }}
                             >
-                                <Typography>생성일: {book.createdAt}</Typography>
-                                <Typography>수정일: {book.updatedAt}</Typography>
+                                {/* <Typography>생성일: {book.createdAt}</Typography>
+                                <Typography>수정일: {book.updatedAt}</Typography> */}
                             </Box>
                         </Paper>
                     </Box>
