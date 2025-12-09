@@ -14,7 +14,21 @@ Spring Boot 기반의 **책(Book) 생성 서비스**로, 사용자(User)가 책�
 - **Lombok**
 
 ---
+## 🧱 ERD 구조
 
+### ERD 개요
+- `User (1) — (N) Book`
+- `Book (1) — (1) GeneratedImage`
+
+### ERD 설명
+
+| 테이블 | 설명 |
+|--------|------|
+| **User** | **user_id(PK)**, login_id, password |
+| **Book** | **book_id(PK)**, title, description, **user_id(FK)** |
+| **GeneratedImage** | **img_id(PK)**, img_url, **book_id(FK)** |
+
+---
 ## 🏗️ 프로젝트 구조
 
 ```src/main/java/com/example/miniproject04
@@ -39,23 +53,27 @@ Spring Boot 기반의 **책(Book) 생성 서비스**로, 사용자(User)가 책�
 ├── BookRepository.java
 └── GeneratedImageRepository.java
 ```
-
-
 ---
+## 📁 폴더 별 정의
 
-## 🧱 ERD 구조
+### 🧱 Entity
+DB 테이블과 매핑되는 도메인 객체를 정의하는 폴더입니다.  
+JPA 어노테이션을 통해 컬럼 구조와 엔티티 간 연관관계를 설정하며,  
+프로젝트의 데이터 구조를 담당합니다.  
 
-### ERD 개요
-- `User (1) — (N) Book`
-- `Book (1) — (1) GeneratedImage`
+### 🧩 Repository
+데이터베이스와 직접 통신하는 폴더로,  
+JpaRepository를 상속해 기본 CRUD 기능을 제공합니다.  
+Service 레이어가 DB에 **직접** 접근하지 않도록 추상화한 계층입니다.
 
-### ERD 설명
+### ⚙️ Service
+애플리케이션의 주요 로직을 처리하는 핵심 폴더입니다.  
+요청 데이터 검증, 예외 처리, 권한 확인 등의 로직을 수행하며  
+Repository와 Controller를 연결하는 역할을 합니다.
 
-| 테이블 | 설명 |
-|--------|------|
-| **User** | **user_id(PK)**, login_id, password |
-| **Book** | **book_id(PK)**, title, description, **user_id(FK)** |
-| **GeneratedImage** | **img_id(PK)**, img_url, **book_id(FK)** |
+### 🌐 Controller
+클라이언트의 HTTP 요청을 받아 처리하는 API 엔드포인트를 저장한 폴더입니다.  
+요청을 Service 레이어로 전달하고, 처리 결과를 JSON 형태로 응답합니다.  
 
 ---
 
@@ -66,17 +84,19 @@ Spring Boot 기반의 **책(Book) 생성 서비스**로, 사용자(User)가 책�
 ```bash
 git clone https://github.com/your-repo/miniproject04.git
 ```
-### 2️⃣ 실행
-### 경로이동
+
+### 2️⃣ 경로이동
 ```cd miniproject04```
 
-### 🟦 macOS / Linux
+### 3️⃣ 실행 명령어
+
+### 🍎 macOS / 🐧 Linux
 ```./gradlew bootRun```
 
-### 🟩 Windows PowerShell
+### 🖥️ Windows PowerShell
 ```.\gradlew bootRun```
 
-### 3️⃣ H2 콘솔 접속
+### 4️⃣H2 콘솔 접속
 ```
 http://localhost:8080/h2-console
 
@@ -85,7 +105,7 @@ ID : sa
 PW :1234
 ```
 
-📄 API 명세서 (API Specification)
+# 📄 API 명세서 (API Specification)
 ## **🧑‍💻 User API**
 
 **1. 로그인 (Login)**
