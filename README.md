@@ -26,6 +26,7 @@
 - Spring Web / Spring Data JPA
 - H2 Database
 - Lombok
+- Rest API
 - OpenAI 이미지 다운로드 기능
 
 ### **AI**
