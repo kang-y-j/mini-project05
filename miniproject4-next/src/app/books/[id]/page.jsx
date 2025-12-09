@@ -69,7 +69,8 @@ export default function BookDetailPage() {
                 console.error("❌ 책 목록 조회 실패:", err);
                 setBooks([]);
             } finally {
-                setLoading(false);
+                // setLoading(false);
+                console.log(book);
             }
 
         };
@@ -192,7 +193,7 @@ export default function BookDetailPage() {
                             {book.image_url ? (
                                 <Box
                                     component="img"
-                                    src={book.coverUrl}
+                                    src={book.image_url}
                                     alt="도서 표지"
                                     sx={{
                                         width: "100%",
