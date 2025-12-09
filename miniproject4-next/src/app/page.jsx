@@ -140,7 +140,7 @@ export default function HomePage() {
                                         cursor: "pointer",
                                     }}
                                     onClick={() =>
-                                        router.push(`/books/detail/${book.book_id}`)
+                                        router.push(`/books/${book.book_id}`)
                                     }
                                 >
                                     <Typography variant="h6" fontWeight={700}>
