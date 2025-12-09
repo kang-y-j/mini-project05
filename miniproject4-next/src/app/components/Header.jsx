@@ -10,19 +10,16 @@ export default function Header() {
     const router = useRouter();
     const pathname = usePathname();
 
-    // ✅ AuthContext에서 전역 로그인 상태 가져오기
-    const { user, logout } = useAuth();
+    const { user, logout, username} = useAuth();
 
     const handleLogout = () => {
         if (confirm("로그아웃하시겠습니까?")) {
-            logout();            // ✅ localStorage 직접 건드리지 말고 context 사용
+            logout();
             router.replace("/login");
         }
     };
 
-    // "/books/edit" 페이지 → 새 도서 등록 버튼 숨김
     const hideCreateButton = pathname.startsWith("/books/edit");
-    // "/login" 페이지 → 오른쪽 버튼 전체 숨김
     const hideAllButtons = pathname === "/login";
 
     return (
@@ -37,7 +34,7 @@ export default function Header() {
                 {/* 왼쪽 타이틀 */}
                 <Typography
                     variant="h6"
-                    component={Link}
+                    // component={Link}
                     href="/"
                     sx={{
                         flexGrow: 1,
@@ -53,7 +50,7 @@ export default function Header() {
                 {/* 로그인 페이지는 오른쪽 버튼 숨김 */}
                 {!hideAllButtons && (
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        {/* ✅ 로그인 안 했을 때 */}
+                        {/* 로그인 안 했을 때 */}
                         {!user && (
                             <>
                                 <Button
@@ -65,6 +62,7 @@ export default function Header() {
                                     로그인
                                 </Button>
 
+                                
                                 {!hideCreateButton && (
                                     <Button
                                         component={Link}
@@ -84,15 +82,14 @@ export default function Header() {
                             </>
                         )}
 
-                        {/* ✅ 로그인 했을 때 */}
+                        {/* 로그인 했을 때 */}
                         {user && (
                             <>
                                 <Typography sx={{ mr: 1, fontWeight: 600 }}>
-                                    {/* user가 객체면 user.login_id, 문자열이면 그냥 user */}
-                                    {user} 님
+                                    {username} 님
                                 </Typography>
 
-                                {!hideCreateButton && (
+                                 {!hideCreateButton && (
                                     <Button
                                         component={Link}
                                         href="/books/edit"

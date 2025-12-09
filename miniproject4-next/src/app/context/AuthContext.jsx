@@ -7,12 +7,16 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null); // 로그인 user_id 저장
+    const [username, setUsername] = useState(null); // 로그인 user_id 저장
 
     // ✔ 새로고침 시 로그인 유지
     useEffect(() => {
         if (typeof window === "undefined") return;
-        const saved = localStorage.getItem("loginUser");
-        if (saved) setUser(saved);
+        const savedUser = localStorage.getItem("loginUser");
+        const savedName = localStorage.getItem("loginUsername");
+
+        if (savedUser) setUser(savedUser);
+        if (savedName) setUsername(savedName);
     }, []);
 
     // ----------------------------------------------------------------------------------------
@@ -35,7 +39,10 @@ export function AuthProvider({ children }) {
             }
 
             setUser(userId);
+            setUsername(id);
+
             localStorage.setItem("loginUser", userId);
+            localStorage.setItem("loginUsername", id);
             return userId;
 
         } catch (err) {
@@ -62,7 +69,7 @@ export function AuthProvider({ children }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout }}>
+        <AuthContext.Provider value={{ user, username, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

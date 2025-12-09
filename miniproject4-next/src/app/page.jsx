@@ -86,7 +86,7 @@ export default function HomePage() {
                         </Typography>
                     </Box>
 
-                    {loginUser && (
+                    {/* {loginUser && (
                         <Button
                             variant="contained"
                             onClick={() => router.push("/books/edit")}
@@ -94,7 +94,7 @@ export default function HomePage() {
                         >
                             새 도서 등록
                         </Button>
-                    )}
+                    )} */}
                 </Box>
 
                 {/* 콘텐츠 */}
