@@ -3,11 +3,19 @@ set -e
 
 APP_DIR="/home/ubuntu/app"
 
-# 기존 앱 종료(단순 버전)
+echo "[deploy] whoami=$(whoami) pwd=$(pwd)"
+echo "[deploy] jars in $APP_DIR:"
+ls -al "$APP_DIR" || true
+
 pkill -f 'java -jar' || true
 
-# 새 앱 실행: -plain.jar 제외
-JAR=$(ls -1 "$APP_DIR"/*.jar | grep -v -- '-plain\.jar$' | head -n 1)
+JAR=$(ls -1 "$APP_DIR"/*.jar | grep -v -- '-plain\.jar$' | head -n 1 || true)
+echo "[deploy] selected JAR=$JAR"
 
-echo "Starting: $JAR"
+if [ -z "$JAR" ]; then
+  echo "[deploy] ERROR: no runnable jar found" >&2
+  exit 1
+fi
+
 nohup java -jar "$JAR" > "$APP_DIR/app.log" 2>&1 &
+echo "[deploy] started pid=$!"
