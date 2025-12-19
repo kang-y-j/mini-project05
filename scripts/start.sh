@@ -13,12 +13,6 @@ echo "PWD: $(pwd)" >> "$LOG"
 echo "Node: $(node -v)" >> "$LOG"
 echo "NPM: $(npm -v)" >> "$LOG"
 
-# pm2 없으면 설치 (글로벌은 사전 설치 권장)
-if ! command -v pm2 >/dev/null 2>&1; then
-  echo "Installing pm2..." >> "$LOG"
-  npm install -g pm2 >> "$LOG" 2>&1
-fi
-
 # node_modules 없거나 깨졌으면 재설치
 if [ ! -d node_modules ] || [ ! -x node_modules/.bin/next ]; then
   echo "Installing dependencies (npm ci)..." >> "$LOG"
