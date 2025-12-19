@@ -26,12 +26,35 @@ if [ ! -d node_modules ] || [ ! -x node_modules/.bin/next ]; then
   npm ci --omit=dev >> "$LOG" 2>&1
 fi
 
-# 기존 프로세스 있으면 정리
-pm2 delete "$APP_NAME" >/dev/null 2>&1 || true
+# ===== 기존 프로세스 종료 =====
+if [ -f "$APP_DIR/app.pid" ]; then
+  OLD_PID=$(cat "$APP_DIR/app.pid")
+  if ps -p $OLD_PID > /dev/null 2>&1; then
+    echo "Stopping existing process $OLD_PID" >> "$LOG"
+    kill $OLD_PID
+    sleep 2
+  fi
+  rm -f "$APP_DIR/app.pid"
+fi
 
-# Next.js 실행
+# ===== Next.js 실행 =====
 echo "Starting Next.js..." >> "$LOG"
-pm2 start "npx next start -p $PORT" --name "$APP_NAME" >> "$LOG" 2>&1
-pm2 save >> "$LOG" 2>&1
 
+nohup npx next start -p $PORT \
+  >> "$LOG" 2>&1 &
+
+NEW_PID=$!
+echo $NEW_PID > "$APP_DIR/app.pid"
+
+echo "Next.js started with PID $NEW_PID" >> "$LOG"
 echo "===== END $(date) =====" >> "$LOG"
+
+# # 기존 프로세스 있으면 정리
+# pm2 delete "$APP_NAME" >/dev/null 2>&1 || true
+
+# # Next.js 실행
+# echo "Starting Next.js..." >> "$LOG"
+# pm2 start "npx next start -p $PORT" --name "$APP_NAME" >> "$LOG" 2>&1
+# pm2 save >> "$LOG" 2>&1
+
+# echo "===== END $(date) =====" >> "$LOG"
