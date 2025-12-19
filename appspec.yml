@@ -2,16 +2,13 @@ version: 0.0
 os: linux
 
 files:
-  - source: /miniproject4-next
-    destination: /home/ubuntu/apps/miniproject4-next
-    overwrite: true
-
-  - source: /scripts
-    destination: /home/ubuntu/apps/scripts
+  # 🔥 deploy/ 기준 전체를 그대로 복사 (구조 보존)
+  - source: /
+    destination: /home/ubuntu/apps
     overwrite: true
 
 permissions:
-  # 🔥 부모 디렉토리까지 포함 (가장 중요)
+  # 🔥 부모 디렉토리까지 포함 (권한 문제 종결)
   - object: /home/ubuntu/apps
     pattern: "**"
     owner: ubuntu
@@ -19,15 +16,6 @@ permissions:
     mode: 755
     type:
       - directory
-      - file
-
-  # 🔹 스크립트 실행 권한 (명시적으로 유지)
-  - object: /home/ubuntu/apps/scripts
-    pattern: "*.sh"
-    owner: ubuntu
-    group: ubuntu
-    mode: 755
-    type:
       - file
 
 hooks:
