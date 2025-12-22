@@ -1,0 +1,19 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto17
+    commands:
+      - java -version
+
+  build:
+    commands:
+      - cd miniproject4-spring/miniproject04
+      - chmod +x gradlew
+      - ./gradlew clean build -x test
+      - cd ../../..
+
+artifacts:
+  files:
+    - "**/*"
