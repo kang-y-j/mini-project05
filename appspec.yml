@@ -1,4 +1,4 @@
-version: 0.0
+version: 1.0
 os: linux
 
 files:
@@ -6,12 +6,14 @@ files:
     destination: /home/ubuntu/app
 
 hooks:
+  BeforeInstall:
+    - location: scripts/before_install.sh
+      runas: root
+
   ApplicationStop:
     - location: scripts/stop.sh
-      timeout: 60
       runas: ubuntu
 
   ApplicationStart:
     - location: scripts/start.sh
-      timeout: 300
       runas: ubuntu
