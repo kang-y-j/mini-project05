@@ -9,10 +9,9 @@ phases:
 
   build:
     commands:
-      - cd miniproject4-spring/miniproject04
+      - cd miniproject04
       - chmod +x gradlew
       - ./gradlew clean build -x test
-      - cd ../../..
 
 artifacts:
   files:
