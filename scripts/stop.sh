@@ -1,12 +1,11 @@
 #!/bin/bash
 
-APP_DIR=/home/ubuntu/app
-PID_FILE=$APP_DIR/app.pid
+PID=$(pgrep -f 'java -jar')
 
-if [ -f "$PID_FILE" ]; then
-  PID=$(cat $PID_FILE)
-  kill $PID || true
-  rm -f $PID_FILE
+if [ -n "$PID" ]; then
+  echo "Stopping application (PID=$PID)"
+  kill $PID
+  sleep 5
 else
-  echo "No PID file found" >> $APP_DIR/app.log
+  echo "No running application found"
 fi
