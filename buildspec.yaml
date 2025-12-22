@@ -10,3 +10,8 @@ phases:
       - cd miniproject4-spring/miniproject04
       - chmod +x gradlew
       - ./gradlew clean build -x test
+
+artifacts:
+  base-directory: miniproject4-spring/miniproject04/build/libs
+  files:
+    - "*.jar"
