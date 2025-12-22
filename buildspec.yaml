@@ -14,4 +14,6 @@ phases:
 artifacts:
   base-directory: miniproject4-spring/miniproject04/build/libs
   files:
-    - "*.jar"
+    - appspec.yml
+    - scripts/**/*
+    - build/libs/*.jar
