@@ -14,6 +14,7 @@
 # 🛠️ Tech Stack
 
 ### **Frontend**
+
 - Next.js (App Router)
 - React
 - Material UI (MUI)
@@ -22,7 +23,8 @@
 - OpenAI DALL·E 이미지 생성 API
 
 ### **Backend**
-- Spring Boot 
+
+- Spring Boot
 - Spring Web
 - Spring Data JPA
 - H2 Database
@@ -31,11 +33,13 @@
 - Rest API
 
 ### **AI**
+
 - OpenAI DALL·E (표지 자동 생성)
 
 # 🧱 Project Structure
 
 📦 project-root
+
 ```
 ├── backend/ # Spring Boot API 서버
 └── frontend/ # Next.js 클라이언트
@@ -71,6 +75,3 @@
 - **📁 Frontend README** → `/frontend/README.md`
 
 ---
-
-
-
